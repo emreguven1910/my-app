@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Güven Geziyor</string>
+    <string name="nav_home">Yazılar</string>
+    <string name="nav_routes">Rotalar</string>
+    <string name="nav_journal">Günlüğüm</string>
+    <string name="nav_about">Hakkında</string>
+    <string name="search_placeholder">Gezi veya şehir ara…</string>
+    <string name="category_all">Tümü</string>
+    <string name="category_domestic">Yurtiçi Gezileri</string>
+    <string name="category_train">Tren Yolculukları</string>
+    <string name="category_historic">Tarih &amp; Kültür</string>
+    <string name="share_post">Yazıyı Paylaş</string>
+    <string name="listen_audio">Sesli Dinle</string>
+    <string name="bookmark_saved">Yazı kaydedilenlere eklendi</string>
+    <string name="bookmark_removed">Yazı kaydedilenlerden çıkarıldı</string>
+    <string name="new_note">Yeni Seyahat Notu</string>
+    <string name="checklist_title">Seyahat Hazırlık Listesi</string>
+</resources>

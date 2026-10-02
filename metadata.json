@@ -1,0 +1,6 @@
+{
+  "name": "Güven Geziyor",
+  "description": "Güven Geziyor seyahat blogu mobil uygulaması: Gezi yazıları, seyahat rotaları, çevrimdışı okuma ve seyahat günlüğü.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

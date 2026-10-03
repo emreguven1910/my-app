@@ -1,9 +1,16 @@
 package com.example
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -32,14 +39,16 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.screens.AboutScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.InAppWebScreen
@@ -47,17 +56,47 @@ import com.example.ui.screens.JournalScreen
 import com.example.ui.screens.PostDetailScreen
 import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.RoutesScreen
+import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.Screen
 import com.example.ui.viewmodel.TravelViewModel
+import com.example.util.TravelNotificationManager
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: TravelViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        TravelNotificationManager.createNotificationChannels(this)
+        handleNotificationIntent(intent)
         setContent {
             MyApplicationTheme {
-                TravelApp()
+                TravelApp(viewModel = viewModel)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        if (intent == null) return
+        when (intent.action) {
+            TravelNotificationManager.ACTION_OPEN_POST -> {
+                val postId = intent.getIntExtra(TravelNotificationManager.EXTRA_POST_ID, -1)
+                if (postId != -1) {
+                    viewModel.openPostDetail(postId)
+                }
+            }
+            TravelNotificationManager.ACTION_OPEN_JOURNAL -> {
+                viewModel.navigateTo(Screen.JOURNAL)
+            }
+            TravelNotificationManager.ACTION_OPEN_ROUTES -> {
+                viewModel.navigateTo(Screen.ROUTES)
             }
         }
     }
@@ -65,9 +104,30 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TravelApp(
-    viewModel: TravelViewModel = viewModel()
+    viewModel: TravelViewModel
 ) {
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            TravelNotificationManager.showTravelTip(
+                context,
+                "🔔 Bildirimler Aktif!",
+                "Güven Geziyor seyahat ipuçları ve yeni rota bildirimleri başarıyla etkinleştirildi."
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     if (currentScreen == Screen.DETAIL) {
         PostDetailScreen(viewModel = viewModel)
@@ -161,6 +221,7 @@ fun TravelApp(
                     Screen.ROUTES -> RoutesScreen(viewModel = viewModel)
                     Screen.JOURNAL -> JournalScreen(viewModel = viewModel)
                     Screen.PROFILE -> ProfileScreen(viewModel = viewModel)
+                    Screen.SETTINGS -> SettingsScreen(viewModel = viewModel)
                     Screen.ABOUT -> AboutScreen(viewModel = viewModel)
                     Screen.DETAIL -> PostDetailScreen(viewModel = viewModel)
                 }

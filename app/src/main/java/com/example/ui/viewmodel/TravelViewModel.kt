@@ -28,6 +28,7 @@ enum class Screen {
     ROUTES,
     JOURNAL,
     PROFILE,
+    SETTINGS,
     ABOUT,
     DETAIL
 }
@@ -65,6 +66,28 @@ class TravelViewModel(application: Application) : AndroidViewModel(application),
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
+
+    // Settings states
+    private val _notificationsEnabled = MutableStateFlow(true)
+    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
+
+    private val _newPostAlertsEnabled = MutableStateFlow(true)
+    val newPostAlertsEnabled: StateFlow<Boolean> = _newPostAlertsEnabled.asStateFlow()
+
+    private val _dailyTipAlertsEnabled = MutableStateFlow(true)
+    val dailyTipAlertsEnabled: StateFlow<Boolean> = _dailyTipAlertsEnabled.asStateFlow()
+
+    private val _checklistRemindersEnabled = MutableStateFlow(true)
+    val checklistRemindersEnabled: StateFlow<Boolean> = _checklistRemindersEnabled.asStateFlow()
+
+    private val _autoSyncWifi = MutableStateFlow(true)
+    val autoSyncWifi: StateFlow<Boolean> = _autoSyncWifi.asStateFlow()
+
+    private val _selectedThemeMode = MutableStateFlow("Sistem")
+    val selectedThemeMode: StateFlow<String> = _selectedThemeMode.asStateFlow()
+
+    private val _ttsSpeed = MutableStateFlow(1.0f)
+    val ttsSpeed: StateFlow<Float> = _ttsSpeed.asStateFlow()
 
     // In-app WebView state
     private val _selectedWebSite = MutableStateFlow(WebSiteType.WORDPRESS)
@@ -122,7 +145,7 @@ class TravelViewModel(application: Application) : AndroidViewModel(application),
     val totalExpenseAmount: StateFlow<Double?> = repository.totalExpenseAmount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    private val allPosts: StateFlow<List<PostEntity>> = repository.allPosts
+    val allPosts: StateFlow<List<PostEntity>> = repository.allPosts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val bookmarkedPosts: StateFlow<List<PostEntity>> = repository.bookmarkedPosts
@@ -318,6 +341,53 @@ class TravelViewModel(application: Application) : AndroidViewModel(application),
     fun deleteExpense(id: Long) {
         viewModelScope.launch {
             repository.deleteExpense(id)
+        }
+    }
+
+    fun sendTravelTipNotification(context: android.content.Context) {
+        com.example.util.TravelNotificationManager.showTravelTip(context)
+    }
+
+    fun sendChecklistReminderNotification(context: android.content.Context) {
+        val uncompleted = checklistItems.value.count { !it.isCompleted }
+        com.example.util.TravelNotificationManager.showChecklistReminder(context, uncompleted)
+    }
+
+    fun sendNewPostNotification(context: android.content.Context) {
+        val latestPost = allPosts.value.firstOrNull()
+        if (latestPost != null) {
+            com.example.util.TravelNotificationManager.showNewPostNotification(
+                context = context,
+                postId = latestPost.id,
+                postTitle = latestPost.title,
+                city = latestPost.destinationCity
+            )
+        } else {
+            com.example.util.TravelNotificationManager.showNewPostNotification(
+                context = context,
+                postId = 20,
+                postTitle = "Ankara-Konya Arası YHT Maceramız",
+                city = "Konya"
+            )
+        }
+    }
+
+    fun toggleNotifications(enabled: Boolean) { _notificationsEnabled.value = enabled }
+    fun toggleNewPostAlerts(enabled: Boolean) { _newPostAlertsEnabled.value = enabled }
+    fun toggleDailyTipAlerts(enabled: Boolean) { _dailyTipAlertsEnabled.value = enabled }
+    fun toggleChecklistReminders(enabled: Boolean) { _checklistRemindersEnabled.value = enabled }
+    fun toggleAutoSyncWifi(enabled: Boolean) { _autoSyncWifi.value = enabled }
+    fun setThemeMode(mode: String) { _selectedThemeMode.value = mode }
+    fun setTtsSpeed(speed: Float) {
+        _ttsSpeed.value = speed
+        tts?.setSpeechRate(speed)
+    }
+    fun setTextZoom(scale: Float) { _textZoomScale.value = scale.coerceIn(0.85f, 1.4f) }
+
+    fun clearCache() {
+        viewModelScope.launch {
+            _statusMessage.value = "Önbellek temizlendi, yeniden senkronize ediliyor..."
+            refreshPosts()
         }
     }
 

@@ -33,4 +33,17 @@ class ExampleRobolectricTest {
         val city = HtmlUtils.detectCity("Ankara-Konya Arası YHT Maceramız", "Konya hızlı tren")
         assertEquals("Konya", city)
     }
+
+    @Test
+    fun `travel notification channels created successfully`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        com.example.util.TravelNotificationManager.createNotificationChannels(context)
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val tipsChannel = manager.getNotificationChannel(com.example.util.TravelNotificationManager.CHANNEL_TRAVEL_TIPS)
+        val postsChannel = manager.getNotificationChannel(com.example.util.TravelNotificationManager.CHANNEL_NEW_POSTS)
+        val remindersChannel = manager.getNotificationChannel(com.example.util.TravelNotificationManager.CHANNEL_REMINDERS)
+        org.junit.Assert.assertNotNull(tipsChannel)
+        org.junit.Assert.assertNotNull(postsChannel)
+        org.junit.Assert.assertNotNull(remindersChannel)
+    }
 }

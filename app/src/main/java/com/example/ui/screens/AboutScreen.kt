@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
@@ -172,6 +173,15 @@ fun AboutScreen(
                             modifier = Modifier.testTag("about_share_button")
                         ) {
                             Icon(imageVector = Icons.Default.Share, contentDescription = "Paylaş")
+                        }
+
+                        IconButton(
+                            onClick = {
+                                viewModel.navigateTo(com.example.ui.viewmodel.Screen.SETTINGS)
+                            },
+                            modifier = Modifier.testTag("about_settings_button")
+                        ) {
+                            Icon(imageVector = Icons.Default.Settings, contentDescription = "Ayarlar")
                         }
                     }
                 }

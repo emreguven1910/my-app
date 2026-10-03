@@ -30,9 +30,13 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TipsAndUpdates
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -120,6 +124,37 @@ fun ProfileScreen(
                     onEditClick = { showEditProfileDialog = true },
                     onLogoutClick = { viewModel.logout() }
                 )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { viewModel.navigateTo(com.example.ui.viewmodel.Screen.SETTINGS) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("profile_settings_button"),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Ayarlar")
+                    }
+
+                    OutlinedButton(
+                        onClick = { viewModel.navigateTo(com.example.ui.viewmodel.Screen.ABOUT) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("profile_about_button"),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Bookmark, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Hakkında")
+                    }
+                }
             }
 
             // Stats row
@@ -247,6 +282,11 @@ fun ProfileScreen(
                         )
                     }
                 }
+            }
+
+            // Notification Settings & Interactive Triggers
+            item {
+                NotificationSettingsCard(viewModel = viewModel)
             }
 
             item {
@@ -747,3 +787,169 @@ private fun EditProfileDialog(
         }
     )
 }
+
+@Composable
+private fun NotificationSettingsCard(
+    viewModel: TravelViewModel
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var hasPermission by remember {
+        mutableStateOf(com.example.util.TravelNotificationManager.hasPermission(context))
+    }
+
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasPermission = granted
+        if (granted) {
+            com.example.util.TravelNotificationManager.showTravelTip(
+                context,
+                "🔔 Bildirimler Aktif!",
+                "Güven Geziyor seyahat ipuçları ve yeni rota bildirimleri başarıyla etkinleştirildi."
+            )
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("notification_settings_card"),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (hasPermission) Icons.Default.NotificationsActive else Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Seyahat Bildirimleri",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (hasPermission) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    }
+                ) {
+                    Text(
+                        text = if (hasPermission) "Açık" else "İzin Gerekli",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (hasPermission) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = "Yeni gezi hikayeleri, tren rotası tüyoları ve bavul hazırlık durumu hakkında yerel bildirimler alın.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (!hasPermission && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                Button(
+                    onClick = {
+                        launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Bildirim İznini Etkinleştir")
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+            Text(
+                text = "Bildirimleri Anında Test Edin:",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Button 1: Travel Tip
+            OutlinedButton(
+                onClick = {
+                    if (hasPermission) {
+                        viewModel.sendTravelTipNotification(context)
+                    } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("send_tip_notification_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.Default.TipsAndUpdates, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Günün Seyahat İpucunu Gönder", fontSize = 12.sp)
+            }
+
+            // Button 2: Checklist Reminder
+            OutlinedButton(
+                onClick = {
+                    if (hasPermission) {
+                        viewModel.sendChecklistReminderNotification(context)
+                    } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("send_checklist_notification_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Bavul Hazırlığı Bildirimi Gönder", fontSize = 12.sp)
+            }
+
+            // Button 3: New Post Announcement
+            OutlinedButton(
+                onClick = {
+                    if (hasPermission) {
+                        viewModel.sendNewPostNotification(context)
+                    } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("send_post_notification_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(imageVector = Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Yeni Blog Yazısı Bildirimi Gönder", fontSize = 12.sp)
+            }
+        }
+    }
+}
+

@@ -29,10 +29,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +79,7 @@ fun HomeScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val statusMessage by viewModel.statusMessage.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val categories = listOf("Tümü", "Yurtiçi Gezileri", "Tren Seyahati", "Marmara & Ege", "Favorilerim")
 
@@ -91,6 +95,7 @@ fun HomeScreen(
                 isRefreshing = isRefreshing,
                 statusMessage = statusMessage,
                 onRefreshClick = { viewModel.refreshPosts() },
+                onNotificationClick = { viewModel.sendTravelTipNotification(context) },
                 onOpenWordPress = {
                     viewModel.openInAppWeb("https://guvengeziyor1.wordpress.com/", com.example.ui.viewmodel.WebSiteType.WORDPRESS)
                 },
@@ -99,6 +104,9 @@ fun HomeScreen(
                 },
                 onOpenProfile = {
                     viewModel.navigateTo(com.example.ui.viewmodel.Screen.PROFILE)
+                },
+                onOpenSettings = {
+                    viewModel.navigateTo(com.example.ui.viewmodel.Screen.SETTINGS)
                 }
             )
         }
@@ -240,9 +248,11 @@ private fun HeroHeader(
     isRefreshing: Boolean,
     statusMessage: String?,
     onRefreshClick: () -> Unit,
+    onNotificationClick: () -> Unit,
     onOpenWordPress: () -> Unit,
     onOpenBlogspot: () -> Unit,
-    onOpenProfile: () -> Unit
+    onOpenProfile: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -315,6 +325,23 @@ private fun HeroHeader(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
+                            onClick = onNotificationClick,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                                .testTag("header_notifications_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Günün Seyahat İpucu",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        IconButton(
                             onClick = onOpenProfile,
                             modifier = Modifier
                                 .size(36.dp)
@@ -324,6 +351,23 @@ private fun HeroHeader(
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Üyelik / Profilim",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        IconButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                                .testTag("header_settings_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Ayarlar",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
